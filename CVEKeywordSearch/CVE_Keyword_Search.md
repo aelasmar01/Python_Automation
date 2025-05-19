@@ -1,6 +1,6 @@
-# 🔍 CVE Keyword Alert Script
+# CVE Keyword Alert Script
 
-## 📌 Purpose and Context
+## Purpose and Context
 
 This script monitors newly published CVEs (Common Vulnerabilities and Exposures) from the [National Vulnerability Database (NVD)](https://nvd.nist.gov/) and filters them based on keywords you define.
 
@@ -13,7 +13,7 @@ It solves a common problem in cybersecurity: **manually scanning long CVE lists 
 
 ---
 
-## 🛠 Real-World Use Case
+## Real-World Use Case
 
 This script can be scheduled as a **daily job** in:
 - Security Operations Centers (SOC)
@@ -28,7 +28,7 @@ For example, it can:
 
 ---
 
-## 📥 Inputs & 📤 Outputs
+## Inputs & Outputs
 
 ### Inputs:
 - `keywords.csv`: A simple CSV file where **each row contains one keyword** (e.g., `apache`, `nginx`, `microsoft`).
@@ -43,7 +43,7 @@ For example, it can:
 
 ---
 
-## 🔐 Security and Technical Insights
+## Security and Technical Insights
 
 - Connects over secure HTTPS to the NVD API
 - Filters CVEs using an efficient **compiled regular expression**
@@ -53,7 +53,7 @@ For example, it can:
 
 ---
 
-## 🔄 Extensibility and Scalability
+## Extensibility and Scalability
 
 This script is modular and easily extensible:
 
@@ -64,7 +64,7 @@ This script is modular and easily extensible:
 
 ---
 
-## ⚙️ Setup and Usage
+## ⚙Setup and Usage
 
 ### Requirements:
 - Python 3.7+
@@ -83,7 +83,7 @@ Run the Script:
 /python cve_keyword_alert.py
 Ensure that keywords.csv is present in the same directory as the script.
 
-🚧 Limitations and Future Improvements
+# Limitations and Future Improvements
 Currently checks only CVEs published in the past 24 hours
 
 Does not deduplicate CVEs across runs (append-only behavior)
@@ -98,11 +98,11 @@ Integrate with asset inventories
 
 Add scheduling and alerting options
 
-## ⚡ Performance Considerations and Time Complexity
+## Performance Considerations and Time Complexity
 
 The script was designed with scalability in mind, especially considering the potentially large volume of daily CVE data from the NVD API.
 
-### ✅ Efficient Keyword Matching with Regex
+### Efficient Keyword Matching with Regex
 
 Instead of performing a nested loop where each keyword is checked individually against every CVE description (which would result in `O(n * k * d)` complexity), we:
 
@@ -114,12 +114,12 @@ This reduces the keyword matching step to approximately `O(n * d)`, where:
 - `n` is the number of CVEs returned by the API
 - `d` is the average number of descriptions per CVE
 
-### ✅ Minimal Overhead in File I/O
+### Minimal Overhead in File I/O
 
 - CSV writing is handled in append mode with a one-time check for headers
 - Descriptions are extracted in a linear pass using Python’s built-in generators
 
-### 🧠 Why This Matters
+### Why This Matters
 
 Security automation tools must operate efficiently, especially when integrated into scheduled tasks or larger pipelines. These decisions:
 
