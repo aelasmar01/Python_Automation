@@ -64,25 +64,6 @@ This script is modular and easily extensible:
 
 ---
 
-## ⚙Setup and Usage
-
-### Requirements:
-- Python 3.7+
-- Dependency: `requests`
-
-### Installation:
-
-# (Optional) Set up a virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\\Scripts\\activate
-
-# Install required library
-pip install requests
-
-Run the Script:
-/python cve_keyword_alert.py
-Ensure that keywords.csv is present in the same directory as the script.
-
 # Limitations and Future Improvements
 Currently checks only CVEs published in the past 24 hours
 
