@@ -1,8 +1,10 @@
 # CVE Keyword Alert Script
 
 import requests
+import json
 import csv
 import os
+import re
 from datetime import datetime, timedelta
 
 # --- Configuration ---
@@ -12,11 +14,14 @@ NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 # Output file where matched CVEs will be logged
 CSV_FILE = "cve_alerts.csv"
 
-# --- Functions ---
+# CSV file from which keywords will be read
+KEYWORDS_FILE = "keywords.csv"
+
+# --- Core Functionality ---
 
 def fetch_recent_cves(api_url, days_back=1):
     """
-    Fetch recent CVEs from the NVD API, filtering by publication date.
+    Fetch CVEs from the NVD API published within the last `days_back` days.
     Returns a list of vulnerability records.
     """
     end_date = datetime.utcnow()
@@ -30,46 +35,61 @@ def fetch_recent_cves(api_url, days_back=1):
         response.raise_for_status()
         data = response.json()
         return data.get("vulnerabilities", [])
-    except Exception as e:
-        print(f"Error fetching CVEs: {e}")
+    except Exception as error:
+        print(f"Error fetching CVEs: {error}")
         return []
 
-def filter_cves_by_keywords(cve_list, keywords):
+def get_keywords_from_csv(filepath):
     """
-    Filter the full list of CVEs by checking if any keyword
-    appears in the CVE's description.
+    Load keywords from a CSV file where each row contains one keyword.
+    Returns a list of keyword strings.
     """
-    filtered = []
-    for item in cve_list:
-        cve = item.get("cve", {})
-        if contains_keyword(cve, keywords):
-            filtered.append(cve)
-    return filtered
+    keywords = []
+    try:
+        with open(filepath, newline='', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if row:  # Ignore empty rows
+                    keywords.append(row[0].strip())
+    except FileNotFoundError:
+        print(f"Keyword file '{filepath}' not found.")
+    return keywords
 
-def contains_keyword(cve, keywords):
+def build_keyword_pattern(keywords):
     """
-    Check if the CVE's description contains any of the specified keywords.
-    Returns True if a match is found.
+    Compile a regex pattern that matches any of the given keywords (case-insensitive).
     """
-    descriptions = cve.get("descriptions", [])
-    for desc in descriptions:
-        text = desc.get("value", "").lower()
-        if any(kw.lower() in text for kw in keywords):
+    escaped_keywords = [re.escape(kw) for kw in keywords]
+    return re.compile('|'.join(escaped_keywords), re.IGNORECASE)
+
+def filter_cves_by_keywords(cve_list, pattern):
+    """
+    Filters a list of CVEs to only those whose descriptions match the keyword pattern.
+    """
+    return [item.get("cve", {}) for item in cve_list if has_matching_description(item.get("cve", {}), pattern)]
+
+def has_matching_description(cve, pattern):
+    """
+    Check whether any of the CVE's descriptions match the keyword pattern.
+    """
+    for desc in cve.get("descriptions", []):
+        if pattern.search(desc.get("value", "")):
             return True
     return False
 
-def get_keywords_from_user():
+def extract_cve_data(cve):
     """
-    Prompt the user to input keywords separated by spaces.
-    Returns a list of entered keywords.
+    Extract relevant fields from a CVE object to prepare for CSV export.
     """
-    keywords_input = input("Enter keywords separated by spaces: ")
-    return keywords_input.split()
+    return {
+        'CVE ID': cve.get("id", "UNKNOWN"),
+        'Published Date': cve.get("published", ""),
+        'Description': next((desc.get("value") for desc in cve.get("descriptions", []) if desc.get("lang") == "en"), "")
+    }
 
 def write_cves_to_csv(cve_list, filename):
     """
-    Append filtered CVE entries to a CSV file.
-    Creates the file and headers if it doesn't exist.
+    Append a list of CVE entries to the specified CSV file. Adds headers if the file is new.
     """
     file_exists = os.path.isfile(filename)
     with open(filename, mode='a', newline='', encoding='utf-8') as csvfile:
@@ -80,28 +100,25 @@ def write_cves_to_csv(cve_list, filename):
             writer.writeheader()
 
         for cve in cve_list:
-            cve_id = cve.get("id", "UNKNOWN")
-            published = cve.get("published", "")
-            description = next((desc.get("value") for desc in cve.get("descriptions", []) if desc.get("lang") == "en"), "")
-            writer.writerow({
-                'CVE ID': cve_id,
-                'Published Date': published,
-                'Description': description
-            })
+            writer.writerow(extract_cve_data(cve))
 
 def run_alert_workflow():
     """
-    Main execution logic: get keywords from user, fetch CVEs,
-    filter by keywords, and write results to a CSV file.
+    Main execution logic:
+    1. Load keywords.
+    2. Fetch recent CVEs.
+    3. Filter for keyword matches.
+    4. Log matching CVEs to CSV.
     """
-    keywords = get_keywords_from_user()
+    keywords = get_keywords_from_csv(KEYWORDS_FILE)
 
     if not keywords:
-        print("No keywords entered. Exiting.")
+        print("No keywords found. Exiting.")
         return
 
     cve_data = fetch_recent_cves(NVD_API_URL, days_back=1)
-    filtered_cves = filter_cves_by_keywords(cve_data, keywords)
+    keyword_pattern = build_keyword_pattern(keywords)
+    filtered_cves = filter_cves_by_keywords(cve_data, keyword_pattern)
 
     if filtered_cves:
         write_cves_to_csv(filtered_cves, CSV_FILE)
@@ -110,7 +127,7 @@ def run_alert_workflow():
         print("No relevant CVEs found today.")
 
 def main():
-    """Entry point for the script."""
+    """Script entry point."""
     run_alert_workflow()
 
 if __name__ == "__main__":
