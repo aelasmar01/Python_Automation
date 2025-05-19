@@ -7,7 +7,7 @@ import os
 import re
 from datetime import datetime, timedelta
 
-# --- Configuration ---
+#Configuration 
 # Base URL for NVD's CVE API
 NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 
@@ -17,7 +17,7 @@ CSV_FILE = "cve_alerts.csv"
 # CSV file from which keywords will be read
 KEYWORDS_FILE = "keywords.csv"
 
-# --- Core Functionality ---
+#Core Functionality
 
 def fetch_recent_cves(api_url, days_back=1):
     """
@@ -127,7 +127,7 @@ def run_alert_workflow():
         print("No relevant CVEs found today.")
 
 def main():
-    """Script entry point."""
+    #Script entry point.
     run_alert_workflow()
 
 if __name__ == "__main__":
