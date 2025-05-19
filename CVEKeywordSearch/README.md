@@ -72,7 +72,6 @@ This script is modular and easily extensible:
 
 ### Installation:
 
-```bash
 # (Optional) Set up a virtual environment
 python -m venv venv
 source venv/bin/activate  # Windows: venv\\Scripts\\activate
