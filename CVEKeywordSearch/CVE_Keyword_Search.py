@@ -1,7 +1,6 @@
 # CVE Keyword Alert Script
 
 import requests
-import json
 import csv
 import os
 import re
