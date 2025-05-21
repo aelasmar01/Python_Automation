@@ -7,7 +7,8 @@ import os
 import re
 from datetime import datetime, timedelta
 
-#Configuration 
+
+# --- Configuration ---
 # Base URL for NVD's CVE API
 NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 
@@ -17,7 +18,10 @@ CSV_FILE = "cve_alerts.csv"
 # CSV file from which keywords will be read
 KEYWORDS_FILE = "keywords.csv"
 
-#Core Functionality
+# Determine base directory of the script regardless of execution context
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# --- Core Functionality ---
 
 def fetch_recent_cves(api_url, days_back=1):
     """
@@ -45,14 +49,15 @@ def get_keywords_from_csv(filepath):
     Returns a list of keyword strings.
     """
     keywords = []
+    full_path = os.path.join(BASE_DIR, filepath)
     try:
-        with open(filepath, newline='', encoding='utf-8') as csvfile:
+        with open(full_path, newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
                 if row:  # Ignore empty rows
                     keywords.append(row[0].strip())
     except FileNotFoundError:
-        print(f"Keyword file '{filepath}' not found.")
+        print(f"Keyword file '{full_path}' not found.")
     return keywords
 
 def build_keyword_pattern(keywords):
@@ -91,8 +96,9 @@ def write_cves_to_csv(cve_list, filename):
     """
     Append a list of CVE entries to the specified CSV file. Adds headers if the file is new.
     """
-    file_exists = os.path.isfile(filename)
-    with open(filename, mode='a', newline='', encoding='utf-8') as csvfile:
+    full_path = os.path.join(BASE_DIR, filename)
+    file_exists = os.path.isfile(full_path)
+    with open(full_path, mode='a', newline='', encoding='utf-8') as csvfile:
         fieldnames = ['CVE ID', 'Published Date', 'Description']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -127,7 +133,7 @@ def run_alert_workflow():
         print("No relevant CVEs found today.")
 
 def main():
-    #Script entry point.
+    """Script entry point."""
     run_alert_workflow()
 
 if __name__ == "__main__":
